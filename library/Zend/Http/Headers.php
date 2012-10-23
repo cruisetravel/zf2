@@ -36,7 +36,7 @@ class Headers implements Iterator, Countable
      * current instance, primarily as strings until they are needed (they
      * will be lazy loaded)
      *
-     * @param  string $string
+     * @param  string  $string
      * @return Headers
      */
     public static function fromString($string)
@@ -76,18 +76,20 @@ class Headers implements Iterator, Countable
             $headers->headersKeys[] = str_replace(array('-', '_'), '', strtolower($current['name']));
             $headers->headers[] = $current;
         }
+
         return $headers;
     }
 
     /**
      * Set an alternate implementation for the PluginClassLoader
      *
-     * @param \Zend\Loader\PluginClassLocator $pluginClassLoader
+     * @param  \Zend\Loader\PluginClassLocator $pluginClassLoader
      * @return Headers
      */
     public function setPluginClassLoader(PluginClassLocator $pluginClassLoader)
     {
         $this->pluginClassLoader = $pluginClassLoader;
+
         return $this;
     }
 
@@ -155,6 +157,7 @@ class Headers implements Iterator, Countable
                 'wwwauthenticate'    => 'Zend\Http\Header\WWWAuthenticate'
             ));
         }
+
         return $this->pluginClassLoader;
     }
 
@@ -202,8 +205,8 @@ class Headers implements Iterator, Countable
      * will be delayed until they are retrieved by either get() or current()
      *
      * @throws Exception\InvalidArgumentException
-     * @param string $headerFieldNameOrLine
-     * @param string $fieldValue optional
+     * @param  string                             $headerFieldNameOrLine
+     * @param  string                             $fieldValue            optional
      * @return Headers
      */
     public function addHeaderLine($headerFieldNameOrLine, $fieldValue = null)
@@ -225,12 +228,13 @@ class Headers implements Iterator, Countable
 
         $this->headersKeys[] = $headerKey;
         $this->headers[] = array('name' => $headerName, 'line' => $line);
+
         return $this;
     }
 
     /**
      * Add a Header to this container, for raw values @see addHeaderLine() and addHeaders()
-     * 
+     *
      * @param  Header\HeaderDescription $header
      * @return Headers
      */
@@ -240,13 +244,14 @@ class Headers implements Iterator, Countable
 
         $this->headersKeys[] = $key;
         $this->headers[] = $header;
+
         return $this;
     }
 
     /**
      * Remove a Header from the container
      *
-     * @param Header\HeaderDescription $header
+     * @param  Header\HeaderDescription $header
      * @return bool
      */
     public function removeHeader(Header\HeaderDescription $header)
@@ -255,8 +260,10 @@ class Headers implements Iterator, Countable
         if ($index !== false) {
             unset($this->headersKeys[$index]);
             unset($this->headers[$index]);
+
             return true;
         }
+
         return false;
     }
 
@@ -264,19 +271,20 @@ class Headers implements Iterator, Countable
      * Clear all headers
      *
      * Removes all headers from queue
-     * 
+     *
      * @return Headers
      */
     public function clearHeaders()
     {
         $this->headers = $this->headersKeys = array();
+
         return $this;
     }
 
     /**
      * Get all headers of a certain name/type
-     * 
-     * @param  string $name
+     *
+     * @param  string                                        $name
      * @return false|Header\HeaderDescription|\ArrayIterator
      */
     public function get($name)
@@ -298,6 +306,7 @@ class Headers implements Iterator, Countable
             foreach (array_keys($this->headersKeys, $key) as $index) {
                 $headers[] = $this->headers[$index];
             }
+
             return new \ArrayIterator($headers);
         } else {
             $index = array_search($key, $this->headersKeys);
@@ -314,13 +323,14 @@ class Headers implements Iterator, Countable
 
     /**
      * Test for existence of a type of header
-     * 
+     *
      * @param  string $name
      * @return bool
      */
     public function has($name)
     {
         $name = str_replace(array('-', '_', ' ', '.'), '', strtolower($name));
+
         return (in_array($name, $this->headersKeys));
     }
 
@@ -375,6 +385,7 @@ class Headers implements Iterator, Countable
         if (is_array($current)) {
             $current = $this->lazyLoadHeader(key($this->headers));
         }
+
         return $current;
     }
 
@@ -411,6 +422,7 @@ class Headers implements Iterator, Countable
             // Handle single-value headers
             $headers .= $fieldName . ': ' . $fieldValue . "\r\n";
         }
+
         return $headers;
     }
 
@@ -441,6 +453,7 @@ class Headers implements Iterator, Countable
                 }
             }
         }
+
         return $headers;
     }
 
@@ -454,6 +467,7 @@ class Headers implements Iterator, Countable
         foreach ($this as $item) {
             // $item should now be loaded
         }
+
         return true;
     }
 
@@ -476,9 +490,11 @@ class Headers implements Iterator, Countable
                 $this->headersKeys[] = $key;
                 $this->headers[] = $header;
             }
+
             return $current;
         } else {
             $this->headers[$index] = $current = $headers;
+
             return $current;
         }
 

@@ -26,18 +26,18 @@ class SetCookie implements MultipleHeaderDescription
 
     /**
      * Version
-     * 
+     *
      * @var integer
      */
     protected $version = null;
-    
+
     /**
      * Max Age
-     * 
+     *
      * @var integer
      */
     protected $maxAge = null;
-    
+
     /**
      * Cookie expiry date
      *
@@ -75,15 +75,53 @@ class SetCookie implements MultipleHeaderDescription
      * @static
      * @throws Exception\InvalidArgumentException
      * @param  $headerLine
-     * @param  bool $bypassHeaderFieldName
+     * @param  bool            $bypassHeaderFieldName
      * @return array|SetCookie
      */
     public static function fromString($headerLine, $bypassHeaderFieldName = false)
     {
         /* @var $setCookieProcessor Closure */
+        // static $setCookieProcessor = null;
+
+        // if ($setCookieProcessor === null) {
+        //     $setCookieClass = get_called_class();
+        //     $setCookieProcessor = function($headerLine) use ($setCookieClass) {
+        //         $header = new $setCookieClass;
+        //         $keyValuePairs = preg_split('#;\s*#', $headerLine);
+        //         var_dump($keyValuePairs);
+        //         exit;
+        //         foreach ($keyValuePairs as $keyValue) {
+        //             if (strpos($keyValue, '=')) {
+        //                 list($headerKey, $headerValue) = preg_split('#=\s*#', $keyValue, 2);
+        //             } else {
+        //                 $headerKey = $keyValue;
+        //                 $headerValue = null;
+        //             }
+        //             echo "<br /><br /><br />headerkey : " . $headerKey . " <br /> " . $keyValue  . "  <br /> " . $headerLine . "  <br /> " . var_export(preg_split('#;\s*#', $headerLine)) . " <br /><br />";
+
+        //             switch (str_replace(array('-', '_'), '', strtolower($headerKey))) {
+        //                 case 'expires' : $header->setExpires($headerValue); break;
+        //                 case 'domain'  : $header->setDomain($headerValue); break;
+        //                 case 'path'    : $header->setPath($headerValue); break;
+        //                 case 'secure'  : $header->setSecure(true); break;
+        //                 case 'httponly': $header->setHttponly(true); break;
+        //                 case 'version' : $header->setVersion((int) $headerValue); break;
+        //                 case 'maxage'  : $header->setMaxAge((int) $headerValue); break;
+        //                 default:
+        //                     $header->setName($headerKey);
+        //                     $header->setValue($headerValue);
+        //             }
+        //         }
+
+        //         var_dump($header);
+        //         exit;
+
+        //         return $header;
+        //     };
+        // }
         static $setCookieProcessor = null;
 
-        if ($setCookieProcessor === null) {
+         if ($setCookieProcessor === null) {
             $setCookieClass = get_called_class();
             $setCookieProcessor = function($headerLine) use ($setCookieClass) {
                 $header = new $setCookieClass;
@@ -96,6 +134,14 @@ class SetCookie implements MultipleHeaderDescription
                         $headerValue = null;
                     }
 
+                    // First K=V pair is always the cookie name and value
+                    if ($header->getName() === NULL) {
+                        $header->setName($headerKey);
+                        $header->setValue($headerValue);
+                        continue;
+                    }
+
+                    // Process the remaining elements
                     switch (str_replace(array('-', '_'), '', strtolower($headerKey))) {
                         case 'expires' : $header->setExpires($headerValue); break;
                         case 'domain'  : $header->setDomain($headerValue); break;
@@ -105,8 +151,7 @@ class SetCookie implements MultipleHeaderDescription
                         case 'version' : $header->setVersion((int) $headerValue); break;
                         case 'maxage'  : $header->setMaxAge((int) $headerValue); break;
                         default:
-                            $header->setName($headerKey);
-                            $header->setValue($headerValue);
+                            // Intentionally omitted
                     }
                 }
 
@@ -130,6 +175,7 @@ class SetCookie implements MultipleHeaderDescription
             foreach ($multipleHeaders as $headerLine) {
                 $headers[] = $setCookieProcessor($headerLine);
             }
+
             return $headers;
         }
     }
@@ -139,13 +185,13 @@ class SetCookie implements MultipleHeaderDescription
      *
      * @todo Add validation of each one of the parameters (legal domain, etc.)
      *
-     * @param string $name
-     * @param string $value
-     * @param string $domain
-     * @param int $expires
-     * @param string $path
-     * @param bool $secure
-     * @param bool $httponly
+     * @param  string    $name
+     * @param  string    $value
+     * @param  string    $domain
+     * @param  int       $expires
+     * @param  string    $path
+     * @param  bool      $secure
+     * @param  bool      $httponly
      * @return SetCookie
      */
     public function __construct($name = null, $value = null, $version = null, $maxAge = null, $domain = null, $expires = null, $path = null, $secure = false, $httponly = true)
@@ -163,11 +209,11 @@ class SetCookie implements MultipleHeaderDescription
         if ($version!==null) {
             $this->setVersion($version);
         }
-        
+
         if ($maxAge!==null) {
             $this->setMaxAge($maxAge);
         }
-        
+
         if ($domain) {
             $this->setDomain($domain);
         }
@@ -198,7 +244,7 @@ class SetCookie implements MultipleHeaderDescription
         if ($this->getName() == '') {
             throw new Exception\RuntimeException('A cookie name is required to generate a field value for this cookie');
         }
-        
+
         $value = $this->getValue();
         if (strpos($value,'"')!==false) {
             $value = '"'.urlencode(str_replace('"', '', $value)).'"';
@@ -211,12 +257,12 @@ class SetCookie implements MultipleHeaderDescription
         if ($version!==null) {
             $fieldValue .= '; Version=' . $version;
         }
-        
+
         $maxAge = $this->getMaxAge();
         if ($maxAge!==null) {
             $fieldValue .= '; Max-Age=' . $maxAge;
         }
-        
+
         $expires = $this->getExpires();
         if ($expires) {
             $fieldValue .= '; Expires=' . $expires;
@@ -244,16 +290,21 @@ class SetCookie implements MultipleHeaderDescription
     }
 
     /**
-     * @param string $name
+     * @param  string    $name
      * @return SetCookie
      */
     public function setName($name)
     {
+        // if ($name == '') {
+        //     throw new Exception\RuntimeException('Geen cookienaam ingegeven.');
+        // }
+
         if (preg_match("/[=,; \t\r\n\013\014]/", $name)) {
             throw new Exception\InvalidArgumentException("Cookie name cannot contain these characters: =,; \\t\\r\\n\\013\\014 ({$name})");
         }
 
         $this->name = $name;
+
         return $this;
     }
 
@@ -283,7 +334,7 @@ class SetCookie implements MultipleHeaderDescription
 
     /**
      * Set version
-     * 
+     *
      * @param integer $version
      */
     public function setVersion($version)
@@ -293,20 +344,20 @@ class SetCookie implements MultipleHeaderDescription
         }
         $this->version = $version;
     }
-    
+
     /**
      * Get version
-     * 
+     *
      * @return integer
      */
     public function getVersion()
     {
         return $this->version;
     }
-    
+
     /**
      * Set Max-Age
-     * 
+     *
      * @param integer $maxAge
      */
     public function setMaxAge($maxAge)
@@ -316,19 +367,19 @@ class SetCookie implements MultipleHeaderDescription
         }
         $this->maxAge = $maxAge;
     }
-    
+
     /**
      * Get Max-Age
-     * 
+     *
      * @return integer
      */
     public function getMaxAge()
     {
         return $this->maxAge;
     }
-    
+
     /**
-     * @param int $expires
+     * @param  int       $expires
      * @return SetCookie
      */
     public function setExpires($expires)
@@ -341,6 +392,7 @@ class SetCookie implements MultipleHeaderDescription
             }
             $this->expires = (int) $expires;
         }
+
         return $this;
     }
 
@@ -355,6 +407,7 @@ class SetCookie implements MultipleHeaderDescription
         if ($inSeconds) {
             return $this->expires;
         }
+
         return gmdate('D, d-M-Y H:i:s', $this->expires) . ' GMT';
     }
 
@@ -427,7 +480,7 @@ class SetCookie implements MultipleHeaderDescription
      *
      * Always returns false if the cookie is a session cookie (has no expiry time)
      *
-     * @param int $now Timestamp to consider as "now"
+     * @param  int     $now Timestamp to consider as "now"
      * @return boolean
      */
     public function isExpired($now = null)
@@ -488,8 +541,8 @@ class SetCookie implements MultipleHeaderDescription
             }
             $headerLine .= ', ' . $header->getFieldValue();
         }
+
         return $headerLine;
     }
-
 
 }
